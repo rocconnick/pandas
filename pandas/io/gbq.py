@@ -1,3 +1,4 @@
+import os
 import warnings
 from datetime import datetime
 import json
@@ -153,6 +154,10 @@ class GbqConnector(object):
 
     def get_credentials(self):
         if self.private_key:
+            return self.get_service_account_credentials()
+        elif "GOOGLE_APPLICATION_CREDENTIALS" in os.environ:
+            # Try to get private key from environment
+            self.private_key = os.environ["GOOGLE_APPLICATION_CREDENTIALS"]
             return self.get_service_account_credentials()
         else:
             return self.get_user_account_credentials()
@@ -560,8 +565,10 @@ def read_gbq(query, project_id=None, index_col=None, col_order=None,
     https://developers.google.com/api-client-library/python/apis/bigquery/v2
 
     Authentication to the Google BigQuery service is via OAuth 2.0.
-    By default user account credentials are used. You will be asked to
-    grant permissions for product name 'pandas GBQ'. It is also posible
+    By default, a key for service account credentials will be acquired through
+    $GOOGLE_APPLICATION_CREDENTIALS, or authentication will fall back to
+    user account credentials. For user account credentials, you will be asked
+    to grant permissions for product name 'pandas GBQ'. It is also posible
     to authenticate via service account credentials by using
     private_key parameter.
 
