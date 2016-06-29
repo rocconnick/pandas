@@ -163,11 +163,10 @@ class GbqConnector(object):
         elif "GOOGLE_APPLICATION_CREDENTIALS" in os.environ:
             if not os.path.isfile(
                     os.environ["GOOGLE_APPLICATION_CREDENTIALS"]):
-                raise InvalidPrivateKeyEnvironmentVariable("") 
-                         #  " "
-                         #"Private key file pointed to by environment variable "
-                         #"$GOOGLE_APPLICATION_CREDENTIALS is not a valid "
-                         #"file.")
+                raise InvalidPrivateKeyEnvironmentVariable(
+                         "Private key file pointed to by environment variable "
+                         "$GOOGLE_APPLICATION_CREDENTIALS is not a valid "
+                         "file.")
 
             # Try to get private key from environment
             self.private_key = os.environ["GOOGLE_APPLICATION_CREDENTIALS"]
