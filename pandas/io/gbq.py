@@ -67,6 +67,11 @@ class InvalidPrivateKeyFormat(PandasError, ValueError):
     """
     pass
 
+class InvalidPrivateKeyEnvironmentVariable(PandasError, ValueError):
+    """
+    Raised when the environment variable pointing at the private key
+    ($GOOGLE_APPLICATION_CREDENTIALS) is not a valid file.
+    """
 
 class AccessDenied(PandasError, ValueError):
     """
@@ -156,6 +161,14 @@ class GbqConnector(object):
         if self.private_key:
             return self.get_service_account_credentials()
         elif "GOOGLE_APPLICATION_CREDENTIALS" in os.environ:
+            if not os.path.isfile(
+                    os.environ["GOOGLE_APPLICATION_CREDENTIALS"]):
+                raise InvalidPrivateKeyEnvironmentVariable("") 
+                         #  " "
+                         #"Private key file pointed to by environment variable "
+                         #"$GOOGLE_APPLICATION_CREDENTIALS is not a valid "
+                         #"file.")
+
             # Try to get private key from environment
             self.private_key = os.environ["GOOGLE_APPLICATION_CREDENTIALS"]
             return self.get_service_account_credentials()
