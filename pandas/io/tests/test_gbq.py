@@ -1,3 +1,4 @@
+import os
 import re
 from datetime import datetime
 import nose
@@ -183,6 +184,34 @@ def test_generate_bq_schema_deprecated():
         df = make_mixed_dataframe_v2(10)
         gbq.generate_bq_schema(df)
 
+class EnvironDictRestorer:
+    """
+    Restores an entry in os.environ to its original value upon destruction
+    if that entry in the dict already exists.
+
+    Original value is stored upon construction, and restored upon destruction.
+    Best used in "with ... as ...:" block
+    """
+    def __init__(self, key):
+        """
+            Constructor stores the envorument key
+        """
+        self.key = key
+
+    def __enter__(self):
+        # Stash the value associates with the environment key
+        self.old_val = os.environ[self.key] if self.key in os.environ else None
+
+    def __exit__(self, type, value, traceback):
+        if self.old_val is None:
+            # We should remove the variable if it wasn't there before
+            if self.key in os.environ:
+                os.environ.pop(self.key)
+        else:
+            # Otherwise we just restore the old value
+            os.environ[self.key] = self.old_val
+
+
 
 class TestGBQConnectorIntegration(tm.TestCase):
 
@@ -328,6 +357,12 @@ class GBQUnitTests(tm.TestCase):
     def test_read_gbq_with_empty_private_key_json_should_fail(self):
         with tm.assertRaises(gbq.InvalidPrivateKeyFormat):
             gbq.read_gbq('SELECT 1', project_id='x', private_key='{}')
+
+    def test_read_gbq_with_empty_private_key_env_var_should_fail(self):
+        with tm.assertRaises(gbq.InvalidPrivateKeyEnvironmentVariable):
+            with EnvironDictRestorer("GOOGLE_APPLICATION_CREDENTIALS") as r:
+                os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = ""
+                gbq.read_gbq('SELECT 1', project_id=PROJECT_ID)
 
     def test_read_gbq_with_private_key_json_wrong_types_should_fail(self):
         with tm.assertRaises(gbq.InvalidPrivateKeyFormat):
